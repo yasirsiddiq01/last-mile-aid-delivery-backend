@@ -1,4 +1,8 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from app.database import get_db
 
 app = FastAPI(
     title="Last-Mile Aid Delivery Monitoring Backend",
@@ -13,6 +17,7 @@ def root():
         "message": "Last-Mile Aid Delivery Monitoring Backend is running",
         "docs_url": "/docs",
         "health_url": "/health",
+        "db_health_url": "/db-health",
     }
 
 
@@ -22,4 +27,15 @@ def health_check():
         "status": "ok",
         "service": "last-mile-aid-delivery-backend",
         "version": "0.1.0",
+    }
+
+
+@app.get("/db-health")
+def database_health_check(db: Session = Depends(get_db)):
+    db.execute(text("SELECT 1"))
+
+    return {
+        "status": "ok",
+        "database": "connected",
+        "database_type": "sqlite",
     }
