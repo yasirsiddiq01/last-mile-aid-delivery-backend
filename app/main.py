@@ -72,3 +72,15 @@ def schema_health_check(db: Session = Depends(get_db)):
         "expected_tables": expected_tables,
         "missing_tables": missing_tables,
     }
+
+@app.get("/data-health")
+def data_health_check(db: Session = Depends(get_db)):
+    return {
+        "warehouses": db.query(models.Warehouse).count(),
+        "field_locations": db.query(models.FieldLocation).count(),
+        "delivery_partners": db.query(models.DeliveryPartner).count(),
+        "inventory_items": db.query(models.InventoryItem).count(),
+        "warehouse_stock_records": db.query(models.WarehouseStock).count(),
+        "delivery_requests": db.query(models.DeliveryRequest).count(),
+        "issue_reports": db.query(models.IssueReport).count(),
+    }
