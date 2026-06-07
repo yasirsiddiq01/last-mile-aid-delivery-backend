@@ -2,7 +2,10 @@ from fastapi import Depends, FastAPI
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.database import get_db
+from app import models
+from app.database import Base, engine, get_db
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Last-Mile Aid Delivery Monitoring Backend",
@@ -38,4 +41,34 @@ def database_health_check(db: Session = Depends(get_db)):
         "status": "ok",
         "database": "connected",
         "database_type": "sqlite",
+    }
+
+
+@app.get("/schema-health")
+def schema_health_check(db: Session = Depends(get_db)):
+    expected_tables = [
+        "warehouses",
+        "field_locations",
+        "delivery_partners",
+        "inventory_items",
+        "warehouse_stock",
+        "delivery_requests",
+        "shipment_status_history",
+        "issue_reports",
+    ]
+
+    existing_tables = db.execute(
+        text("SELECT name FROM sqlite_master WHERE type='table'")
+    ).fetchall()
+
+    existing_table_names = [row[0] for row in existing_tables]
+
+    missing_tables = [
+        table for table in expected_tables if table not in existing_table_names
+    ]
+
+    return {
+        "status": "ok" if not missing_tables else "error",
+        "expected_tables": expected_tables,
+        "missing_tables": missing_tables,
     }
