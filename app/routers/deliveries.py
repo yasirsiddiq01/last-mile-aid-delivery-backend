@@ -1,3 +1,4 @@
+from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -80,7 +81,24 @@ def list_delivery_requests(db: Session = Depends(get_db)):
         .all()
     )
 
+@router.get("/delayed", response_model=list[schemas.DeliveryRequestRead])
+def list_delayed_deliveries(db: Session = Depends(get_db)):
+    today = date.today()
 
+    active_statuses = [
+        models.DeliveryStatus.PENDING,
+        models.DeliveryStatus.DISPATCHED,
+        models.DeliveryStatus.IN_TRANSIT,
+        models.DeliveryStatus.DELAYED,
+    ]
+
+    return (
+        db.query(models.DeliveryRequest)
+        .filter(models.DeliveryRequest.required_delivery_date < today)
+        .filter(models.DeliveryRequest.status.in_(active_statuses))
+        .order_by(models.DeliveryRequest.required_delivery_date.asc())
+        .all()
+    )
 @router.get("/{delivery_id}", response_model=schemas.DeliveryRequestRead)
 def get_delivery_request(delivery_id: int, db: Session = Depends(get_db)):
     delivery_request = (
