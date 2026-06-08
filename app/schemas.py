@@ -141,5 +141,7 @@ class OperationalSummary(BaseModel):
     delayed: int
     cancelled: int
     failed: int
+    overdue_deliveries: int
     open_issue_reports: int
     low_stock_records: int
+    low_stock_threshold: int
