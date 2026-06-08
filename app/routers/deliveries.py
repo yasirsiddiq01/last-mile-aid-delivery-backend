@@ -6,6 +6,7 @@ from app.database import get_db
 from app.services.validation import (
     ensure_request_code_is_unique,
     validate_delivery_request_references,
+    validate_status_transition,
 )
 
 router = APIRouter(
@@ -95,3 +96,83 @@ def get_delivery_request(delivery_id: int, db: Session = Depends(get_db)):
         )
 
     return delivery_request
+
+@router.patch(
+    "/{delivery_id}/status",
+    response_model=schemas.DeliveryRequestRead,
+)
+def update_delivery_status(
+    delivery_id: int,
+    status_update: schemas.DeliveryStatusUpdate,
+    db: Session = Depends(get_db),
+):
+    delivery_request = (
+        db.query(models.DeliveryRequest)
+        .filter(models.DeliveryRequest.id == delivery_id)
+        .first()
+    )
+
+    if not delivery_request:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Delivery request with id {delivery_id} not found",
+        )
+
+    old_status = delivery_request.status
+    new_status = status_update.new_status
+
+    validate_status_transition(
+        current_status=old_status,
+        new_status=new_status,
+    )
+
+    try:
+        delivery_request.status = new_status
+
+        status_history = models.ShipmentStatusHistory(
+            delivery_request_id=delivery_request.id,
+            old_status=old_status.value,
+            new_status=new_status.value,
+            status_note=status_update.status_note,
+        )
+
+        db.add(status_history)
+        db.commit()
+        db.refresh(delivery_request)
+
+        return delivery_request
+
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update delivery status: {str(exc)}",
+        )
+
+
+@router.get(
+    "/{delivery_id}/status-history",
+    response_model=list[schemas.ShipmentStatusHistoryRead],
+)
+def get_delivery_status_history(
+    delivery_id: int,
+    db: Session = Depends(get_db),
+):
+    delivery_request = (
+        db.query(models.DeliveryRequest)
+        .filter(models.DeliveryRequest.id == delivery_id)
+        .first()
+    )
+
+    if not delivery_request:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Delivery request with id {delivery_id} not found",
+        )
+
+    return (
+        db.query(models.ShipmentStatusHistory)
+        .filter(models.ShipmentStatusHistory.delivery_request_id == delivery_id)
+        .order_by(models.ShipmentStatusHistory.updated_at.asc())
+        .all()
+    )

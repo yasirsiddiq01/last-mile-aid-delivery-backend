@@ -111,3 +111,63 @@ def validate_delivery_request_references(
         )
 
     return warehouse, field_location, partner, item, stock_record
+
+def validate_status_transition(
+    current_status: models.DeliveryStatus,
+    new_status: models.DeliveryStatus,
+):
+    terminal_statuses = {
+        models.DeliveryStatus.DELIVERED,
+        models.DeliveryStatus.CANCELLED,
+        models.DeliveryStatus.FAILED,
+    }
+
+    allowed_transitions = {
+        models.DeliveryStatus.PENDING: {
+            models.DeliveryStatus.DISPATCHED,
+            models.DeliveryStatus.CANCELLED,
+            models.DeliveryStatus.FAILED,
+            models.DeliveryStatus.DELAYED,
+        },
+        models.DeliveryStatus.DISPATCHED: {
+            models.DeliveryStatus.IN_TRANSIT,
+            models.DeliveryStatus.DELAYED,
+            models.DeliveryStatus.CANCELLED,
+            models.DeliveryStatus.FAILED,
+        },
+        models.DeliveryStatus.IN_TRANSIT: {
+            models.DeliveryStatus.DELIVERED,
+            models.DeliveryStatus.DELAYED,
+            models.DeliveryStatus.FAILED,
+        },
+        models.DeliveryStatus.DELAYED: {
+            models.DeliveryStatus.IN_TRANSIT,
+            models.DeliveryStatus.DELIVERED,
+            models.DeliveryStatus.CANCELLED,
+            models.DeliveryStatus.FAILED,
+        },
+    }
+
+    if current_status == new_status:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Delivery is already in status '{current_status.value}'",
+        )
+
+    if current_status in terminal_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Cannot update delivery from terminal status "
+                f"'{current_status.value}'"
+            ),
+        )
+
+    if new_status not in allowed_transitions.get(current_status, set()):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Invalid status transition from "
+                f"'{current_status.value}' to '{new_status.value}'"
+            ),
+        )
