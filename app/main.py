@@ -1,9 +1,12 @@
+
 from fastapi import Depends, FastAPI
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app import models
 from app.database import Base, engine, get_db
+
+from app.routers import warehouses
 
 Base.metadata.create_all(bind=engine)
 
@@ -12,7 +15,7 @@ app = FastAPI(
     description="Portfolio backend API for monitoring humanitarian last-mile aid deliveries.",
     version="0.1.0",
 )
-
+app.include_router(warehouses.router)
 
 @app.get("/")
 def root():
