@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app import models
 from app.database import Base, engine, get_db
 
-from app.routers import deliveries, warehouses
+from app.routers import deliveries, warehouses, issues
 
 Base.metadata.create_all(bind=engine)
 
@@ -17,6 +17,7 @@ app = FastAPI(
 )
 app.include_router(warehouses.router)
 app.include_router(deliveries.router)
+app.include_router(issues.router)
 
 @app.get("/")
 def root():
