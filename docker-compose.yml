@@ -1,0 +1,14 @@
+services:
+  api:
+    build: .
+    container_name: last-mile-aid-api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: sqlite:////app/data/aid_delivery.db
+      APP_ENV: development
+    volumes:
+      - aid_delivery_data:/app/data
+
+volumes:
+  aid_delivery_data:
