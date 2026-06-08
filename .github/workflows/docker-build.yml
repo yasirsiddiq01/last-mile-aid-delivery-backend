@@ -1,0 +1,57 @@
+name: Docker Build Validation
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - master
+      - main
+
+jobs:
+  docker-build:
+    name: Build and run Docker container
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate Docker Compose file
+        run: docker compose config
+
+      - name: Build Docker image
+        run: docker compose build
+
+      - name: Start API container
+        run: docker compose up -d
+
+      - name: Wait for API health endpoint
+        run: |
+          success=0
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:8000/health; then
+              success=1
+              break
+            fi
+            sleep 2
+          done
+
+          if [ "$success" -ne 1 ]; then
+            docker compose logs
+            exit 1
+          fi
+
+      - name: Seed database inside container
+        run: docker compose exec -T api python -m app.seed_data
+
+      - name: Check seeded data
+        run: |
+          curl -fsS http://127.0.0.1:8000/data-health
+          curl -fsS http://127.0.0.1:8000/data-health | grep '"warehouses":3'
+
+      - name: Stop containers
+        if: always()
+        run: docker compose down
