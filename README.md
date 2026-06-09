@@ -1,5 +1,8 @@
 # Last-Mile Aid Delivery Monitoring Backend
 
+![Python API Tests](https://github.com/yasirsiddiq01/last-mile-aid-delivery-backend/actions/workflows/tests.yml/badge.svg)
+![Docker Build Validation](https://github.com/yasirsiddiq01/last-mile-aid-delivery-backend/actions/workflows/docker-build.yml/badge.svg)
+
 A portfolio-level FastAPI backend for monitoring last-mile humanitarian aid deliveries.
 The project demonstrates Python backend development, REST API design, SQLite database modelling, validation rules, automated tests, GitHub Actions CI, and Docker build validation.
 
