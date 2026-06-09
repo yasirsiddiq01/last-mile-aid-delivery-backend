@@ -240,6 +240,26 @@ Example response:
 
 ---
 
+## Screenshots
+
+### GitHub Repository Main Page
+
+![GitHub Repository Main Page](screenshots/Github_repo_main_page.jpg)
+
+### GitHub Actions Passed
+
+![GitHub Actions Passed](screenshots/Github_report_action_page.jpg)
+
+### FastAPI Swagger Documentation
+
+![FastAPI Docs](screenshots/FastAPI_docs.jpg)
+
+### Operational Summary Response
+
+![Operational Summary](screenshots/Operational_summary.jpg)
+
+---
+
 ## Known Limitations
 
 This project is intentionally scoped as a portfolio backend.
